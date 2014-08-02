@@ -1,0 +1,76 @@
+# Intiallizing the libraries and Read the dataset from your local dataset library
+library(ElemStatLearn)
+library("ipred")
+library("gbm")
+library(caret)
+library(rpart)
+library(randomForest)
+set.seed(1347)
+pml_CSV<-read.csv("F:/Research/Machine  Learning/Coursera/Machine Learning Practicals/pml-training.csv", header=TRUE, sep=",", na.strings=c("NA",""))
+# Preprocessing of Dataset -
+# In Human Activity Recognition system it is containing 19622 records with 160 attribultes and five classes. In datast many attribute 
+# containing blanks value or NA value. We have eliminated those attributes from the dataset.
+# Partitioning the dataset for training and testing 60:40.
+# fetching process created one extra columns removed by following line.
+pml_CSV <- pml_CSV[,-1] 
+inTrain = createDataPartition(pml_CSV$classe, p=0.60, list=FALSE)
+training = pml_CSV[inTrain,]
+testing = pml_CSV[-inTrain,]
+sum((colSums(!is.na(training[,-ncol(training)])) < 0.6*nrow(training)))
+Keep <- c((colSums(!is.na(training[,-ncol(training)])) >= 0.6*nrow(training)))
+training   <-  training[,Keep]
+testing <- testing[,Keep]
+# classlabels are seprated by dataset 
+TrainData <- training[,1:58]
+ TrainClass <-training[,59]
+ TestData <- testing[,1:58]
+ TestClass <-testing[,59]
+
+#Classification Algorithm selection. In this dataset two algorithm were applied 
+# 1. Model based algorithm Naive Bayes.
+# 2. Tree based algorithm random forest
+# Random Forest Algorithm 
+modelFit <- randomForest(classe~.,data=training)
+# Details about the model and Tree
+print(modelFit)
+# tesing with new dataset
+predictions = predict(modelFit,testing)
+# print the value of predicted dataset
+print(predictions)
+# To create confusion matrix with testing dataset
+table((predictions),testing$classe)
+# To plot the Mean square Error
+plot(modelFit)
+
+# Model Accuracy can be calculated 
+accuracy<-c(as.numeric(predict(model,newdata=testing[,-ncol(testing)])==testing$classe))
+accuracy<-sum(accuracy)*100/nrow(testing)
+
+# Accuracy with Random Forest algorithm =  99.89804
+# Implementation with Tree based algorithm rpart
+modelFit = train(classe~.,method = "rpart",data = training)
+ print(modelFit)
+
+predictions <- predict(modelFit,newdata=testing)
+# Measuring the accuracy with algorithm
+accuracy<-c(as.numeric(predict(model,newdata=testing[,-ncol(testing)])==testing$classe))
+accuracy<-sum(accuracy)*100/nrow(testing)
+# Bagging Algorithm 
+  modelFit = train(classe~.,method = "treebag", data = training)
+ Measuring the accuracy with algorithm
+accuracy<-c(as.numeric(predict(modelFit,newdata=testing[,-ncol(testing)])==testing$classe))
+accuracy<-sum(accuracy)*100/nrow(testing)
+# Naive Bayes Algorithm 
+modelFit = train(classe~.,data = training, method = "nb")
+accuracy<-c(as.numeric(predict(modelFit,newdata=testing[,-ncol(testing)])==testing$classe))
+accuracy<-sum(accuracy)*100/nrow(testing)
+# Conclusion We got higher accuracy with Random forest and Naive bayes and less accuracy with bagging and rpart method. rpart
+# and bagging algorithm are slower than random forest and Naive bayes. Naive bayes also take more time than random forest.
+# Random forest is one of the good algorithm for this dataset. 
+
+# For prediction with pml-testing
+testing<-read.csv("F:/Research/Machine  Learning/Coursera/Machine Learning Practicals/pml-testing.csv", header=TRUE, sep=",", na.strings=c("NA",""))
+
+predictions <- predict(model,newdata=testing[-1,])
+print(predictions)
+
